@@ -41,13 +41,28 @@ app.post('/users', function (req, res, next) {
   }
 
   var data = {
+    userName: req.body.userName,
+    password: req.body.password,
     firstName: req.body.firstName,
-    lastName: req.body.lastName
+    lastName: req.body.lastName,
+    email: req.body.email,
+    age: req.body.age,
   }
+  
+  var sql = 'INSERT INTO user_account (user_name, password)  VALUES (?, ?)'
+  
+  var params = [data.userName, data.password]
 
-  var sql = 'INSERT INTO user (memID, firstName, lastName)  VALUES (1, ? , ?)'
+  connection.query(sql, params, function (err, result) {
+    if (err) {
+      res.status(400).json({"error": err.message})
+      return;
+    }
+  });
 
-  var params = [data.firstName, data.lastName]
+  var sql = 'INSERT INTO user (firstName, lastName, email, age)  VALUES (?, ?, ?, ?)'
+
+  var params = [data.firstName, data.lastName, data.email, data.age]
 
   connection.query(sql, params, function (err, result) {
     if (err) {
@@ -75,9 +90,9 @@ app.get('/users', function (req, res) {
     }
 
     // Executing the MySQL query (select all data from the 'users' table).
-    connection.query('SELECT * FROM user', function (err, results, fields) {
+    connection.query('SELECT user.memID, user.dateJoined, user.firstName, user.lastName, user.age, user.email, user_account.id, user_account.user_name, user_account.password FROM user JOIN user_account ON user.memID= user_account.id ORDER BY user.memID', function (err, results, fields) {
   
-          // If some error occurs, we throw an error.
+    // If some error occurs, we throw an error.
     if (err) {
       console.log(err);
       throw err;
@@ -88,6 +103,7 @@ app.get('/users', function (req, res) {
     });
   });
 });
+
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}`));
