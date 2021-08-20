@@ -1,0 +1,4 @@
+{
+    "secret": "some-secret-shit-goes-here",
+    "refreshTokenSecret": "some-more-secret-refresh-token-shit"
+}
