@@ -29,18 +29,19 @@ app.get("/getAudio", (req, res) => res.send(audioTracks));
 
 async function init() {
   model.dropUserAccountTable();
-  await sleep(300);
+  await sleep(500);
   model.dropUserTable();
-  await sleep(300);
+  await sleep(500);
   model.createUserTable();
-  await sleep(300);
+  await sleep(500);
   model.createUserAccountTable();
-  await sleep(300);
+  await sleep(500);
   model.addForeignKey();
-  await sleep(300);
+  await sleep(500);
   model.populateUser();
-  await sleep(300);
+  await sleep(500);
   model.populateUserAccount();
+  await sleep(500);
   console.log("Finished setup");
 }
 
@@ -57,6 +58,9 @@ app.post('/Login', function (req, res, next) {
   controller.authenticateUser(req, res, next);
 });
 
+app.post('/Register', function (req, res, next) {
+  controller.registerUser(req, res, next);
+});
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}`));
