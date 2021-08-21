@@ -3,7 +3,8 @@ const config = require('./config');
 const tokenProvider = require('./TokenProvider');
 const connection = require('./dbconnection');
 const bcrypt = require('bcryptjs');
-
+const validator = require("email-validator");
+const passwordValidator = require('password-validator');
 
 const Controller = {
 
@@ -23,21 +24,43 @@ const Controller = {
             age: req.body.age,
         }
         
-        
+        /** check if email is valid */
+        if (!validator.validate(data.email)) {
+            res.json({
+                "success": false,
+                "message": "Emai is not valid",
+            })
+            return;
+        }
+
+        var schema = new passwordValidator();
+        schema.is().min(8).has().uppercase().has().lowercase().has().digits(1).has().not().spaces();
+
+        /** check if password is valid */
+        if(!schema.validate(data.password)) {
+            res.json({
+                "success": false,
+                "message": "Your passwords moves are weak",
+            })
+            return;
+        }
+
         var sql = 'INSERT INTO user (firstName, lastName, email, age)  VALUES (?, ?, ?, ?)'
         var params = [data.firstName, data.lastName, data.email, data.age]
         connection.query(sql, params, function (err, result) {
             if (err) {
                 res.status(400).json({"error": err.message})
+                return;
             }
             else {
                 sql = 'INSERT INTO user_account (user_name, password, password_salt, password_hash_algorithm) VALUES (?, ?, ?, ?)'
-                var salt = bcrypt.genSaltSync(8);
-                var hash = bcrypt.hashSync(data.password, salt);
+                var salt = bcrypt.genSaltSync(8); /** salt */
+                var hash = bcrypt.hashSync(data.password, salt); /** hash password */
                 params = [data.userName, hash, salt, 'bcrypt']
                 connection.query(sql, params, function (err, result) {
                     if (err) {
                         res.status(400).json({"error": err.message})
+                        return;
                     }
                     else {
                         console.log("User successfuly registered")
@@ -45,6 +68,7 @@ const Controller = {
                             "success": true,
                             "message": "User successfuly registered",
                         })
+                        return;
                     }
                 });
             }
@@ -76,6 +100,7 @@ const Controller = {
                         success: false,
                         message: 'Authentication failed. User not found.'
                     });
+                    return;
                 } else if (user) {
                     // check if password matches
                     if (user[0].user_name != data.userName) {
@@ -84,13 +109,15 @@ const Controller = {
                             success: false,
                             message: 'Authentication failed. Wrong user name.'
                         });
+                        return;
                     }
-                    if (!bcrypt.compareSync(data.password, user[0].password)) {
+                    if (!bcrypt.compareSync(data.password, user[0].password)) { /** AUTHENTICATED */
                         console.log("Authentication failed. Wrong password.")
                         res.json ({
                             success: false,
                             message: 'Authentication failed. Wrong password.'
                         });
+                        return;
                     } else {
                         // user and password correct
                         let token = tokenProvider.generateAccessToken(data.userName);
@@ -102,6 +129,7 @@ const Controller = {
                             if (err) {
                                 console.log("ERROR COCCURED");
                                 res.status(400).json({"error": err.message})
+                                return;
                             }
                             else {
                                 res.json({
