@@ -22,13 +22,14 @@ const Controller = {
             lastName: req.body.lastName,
             email: req.body.email,
             age: req.body.age,
+            dateJoined: new Date().toISOString().slice(0, 10),
         }
         
         /** check if email is valid */
         if (!validator.validate(data.email)) {
             res.json({
                 "success": false,
-                "message": "Emai is not valid",
+                "message": "Email is not valid",
             })
             return;
         }
@@ -45,8 +46,8 @@ const Controller = {
             return;
         }
 
-        var sql = 'INSERT INTO user (firstName, lastName, email, age)  VALUES (?, ?, ?, ?)'
-        var params = [data.firstName, data.lastName, data.email, data.age]
+        var sql = 'INSERT INTO user (dateJoined, firstName, lastName, email, age)  VALUES (?, ?, ?, ?, ?)'
+        var params = [data.dateJoined, data.firstName, data.lastName, data.email, data.age]
         connection.query(sql, params, function (err, result) {
             if (err) {
                 res.status(400).json({"error": err.message})
