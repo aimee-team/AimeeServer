@@ -95,6 +95,7 @@ const Controller = {
                 console.log("error" + err);
             } else {
                 user = content;
+                console.log(user);
                 if (user[0] === [] || user[0] === null || user[0] === undefined)  {
                     console.log("Authentication failed. User not found.")
                     res.json ({
@@ -112,35 +113,86 @@ const Controller = {
                         });
                         return;
                     }
+                    var memberID = user[0].ID;
                     if (!bcrypt.compareSync(data.password, user[0].password)) { /** AUTHENTICATED */
-                        console.log("Authentication failed. Wrong password.")
-                        res.json ({
-                            success: false,
-                            message: 'Authentication failed. Wrong password.'
-                        });
-                        return;
-                    } else {
-                        // user and password correct
-                        let token = tokenProvider.generateAccessToken(data.userName);
-                        console.log(token);
-                        var params = [token.token, token.refresh_token, data.userName]
 
-                        var sql = 'UPDATE user_account SET access_token = ?, refresh_token = ? WHERE user_name = ?'
-                        connection.query(sql, params, function (err, result) {
-                            if (err) {
-                                console.log("ERROR COCCURED");
-                                res.status(400).json({"error": err.message})
-                                return;
+                        let success = false
+
+                        //check if other instances of same username are correct login
+                        for (let i = 0; i < user.length; i++) {
+                            if (bcrypt.compareSync(data.password, user[i].password)) {
+                                success = true
+                                memberID = user[i].ID
+                                console.log(memberID)
+                                break;
                             }
-                            else {
-                                res.json({
-                                    success: true,
-                                    message: 'Heres a token my guy', 
-                                    token: token
-                                });
-                            }
-                        });
+                        }
+
+                        if (!success) {
+                            console.log("Authentication failed. Wrong password.")
+                            res.json ({
+                                success: false,
+                                message: 'Authentication failed. Wrong password.'
+                            });
+                            return;
+                        }
                     }
+
+                    // user and password correct (otherwise would've returned out of the function)
+                    var token = tokenProvider.generateAccessToken(memberID, data.userName);
+
+                    //get IDtoken
+                    var sql = 'SELECT * from user where memID = ?'
+                    var params = [memberID]
+                    connection.query(sql, params, function (err, result) {
+                        if (err) {
+                            console.log("error" + err);
+                            res.status(400).json({"error": err.message})
+                            return;
+                        }
+                        else {
+                            console.log(result)
+
+                            let userData = {
+                                dateJoined: result[0].dateJoined,
+                                username: data.userName,
+                                firstName: result[0].firstName,
+                                lastName: result[0].lastName,
+                                email: result[0].email,
+                                age: result[0].age,
+                            }
+
+                            token['id_token'] = tokenProvider.generateIDToken(userData)
+
+                            //return all tokens
+                            res.json({
+                                success: true,
+                                message: 'Heres a token my guy', 
+                                token: token
+                            });
+                        }
+                    })
+                    
+                    
+                    // Don't need to store tokens in database, as they can just be verified by the server instead
+                    // var params = [token.token, token.refresh_token, data.userName]
+
+                    // var sql = 'UPDATE user_account SET access_token = ?, refresh_token = ? WHERE user_name = ?'
+                    // connection.query(sql, params, function (err, result) {
+                    //     if (err) {
+                    //         console.log("ERROR COCCURED");
+                    //         res.status(400).json({"error": err.message})
+                    //         return;
+                    //     }
+                    //     else {
+                    //         res.json({
+                    //             success: true,
+                    //             message: 'Heres a token my guy', 
+                    //             token: token
+                    //         });
+                    //     }
+                    // });
+                    
                 } else {
                     console.log("Error" + err.message);
                     throw err;
@@ -154,7 +206,7 @@ module.exports = Controller;
 
 
 function fetchName(userName, callback) {
-    connection.query('SELECT user_name, password FROM user_account WHERE user_name = ?', userName, function (err, result) {
+    connection.query('SELECT user_name, password, ID FROM user_account WHERE user_name = ?', userName, function (err, result) {
         if (err) {
             callback(err, null);
         } else {

@@ -1,5 +1,6 @@
 {
     "secret": "some-secret-shit-goes-here",
     "refreshTokenSecret": "some-more-secret-refresh-token-shit",
+    "idTokenSecret": "secret-secrets-for-the-id-token",
     "salt": "Biscuits"
 }
