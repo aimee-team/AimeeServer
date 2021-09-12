@@ -95,7 +95,6 @@ const Controller = {
                 console.log("error" + err);
             } else {
                 user = content;
-                console.log(user);
                 if (user[0] === [] || user[0] === null || user[0] === undefined)  {
                     console.log("Authentication failed. User not found.")
                     res.json ({
@@ -123,7 +122,7 @@ const Controller = {
                             if (bcrypt.compareSync(data.password, user[i].password)) {
                                 success = true
                                 memberID = user[i].ID
-                                console.log(memberID)
+                                // console.log(memberID)
                                 break;
                             }
                         }
@@ -151,7 +150,7 @@ const Controller = {
                             return;
                         }
                         else {
-                            console.log(result)
+                            // console.log(result)
 
                             let userData = {
                                 dateJoined: result[0].dateJoined,
@@ -199,6 +198,43 @@ const Controller = {
                 }
             }
         })
+    },
+
+    /**
+     * Middleware function to validate the access token to verify that the client has a valid token to access to the resource.
+     * If valid, the `isValid` property will be added to `req`, which can be used by the subsequent route handlers. The payload
+     * is added to `req.isValid.payload`.
+     */
+    validate: function(req, res, next) {
+
+        const header = req.headers['authorization'];
+        const [scheme, token] = header.split(' ');
+        if (scheme === 'Bearer' && typeof token != 'undefined' && (token != null)) {
+            try {
+                let payload = jwt.verify(token, config.secret);
+                console.log('Authorized access')
+
+                //add response to req so later functions can access it
+                req['isValid'] = {
+                    success: true,
+                    message: 'Authorized access',
+                    payload: payload
+                }
+            } catch (err) {
+                req['isValid'] = {
+                    success: false,
+                    message: 'Invalid or expired token'
+                }
+            }
+        }
+        else {
+            req['isValid'] = {
+                success: false,
+                message: 'Invalid request'
+            }
+        }
+
+        next()
     }
 }
 

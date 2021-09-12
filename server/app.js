@@ -4,6 +4,7 @@ const path = require("path");
 const port = 5000;
 const model = require('./Model');
 const controller = require('./Controller');
+const tokenProvider = require("./tokenProvider");
 const connection = require('./dbconnection');
 
 
@@ -24,7 +25,6 @@ app.use(bodyParser.json())
 
 //routes accessible to the app.
 app.get("/", (req, res) => res.send("This is a Node.js server running."));
-app.get("/getAudio", (req, res) => res.send(audioTracks));
 
 
 async function init() {
@@ -60,6 +60,26 @@ app.post('/Login', function (req, res, next) {
 
 app.post('/Register', function (req, res, next) {
   controller.registerUser(req, res, next);
+});
+
+app.get('/Refresh', controller.validate, function(req, res) {
+    tokenProvider.generateNewTokens(req, res)
+})
+
+
+//Resource Routes
+app.get("/getAudio", controller.validate, function(req, res) {
+    if(req.isValid.success) {
+        res.send(audioTracks)
+    }
+    else {
+        res.status(401).send(req.isValid)
+    }
+});
+
+//example route for a get request with access token
+app.get('/Resource', controller.validate, function(req, res, next) {
+    res.json(req.isValid);
 });
 
 
