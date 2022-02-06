@@ -1,11 +1,14 @@
 const express = require("express");
 const fs = require("fs");
+const Axios = require("axios");
 const path = require("path");
 const port = 5000;
 const model = require('./Model');
 const controller = require('./Controller');
 const tokenProvider = require("./tokenProvider");
 const connection = require('./dbconnection');
+
+const AIurl = "http://localhost:5000/api/ai";       //change to route for Gateway API for aws lambda instance for the python ai script
 
 
 //variable getting information from the audios.json on the server folders.
@@ -66,6 +69,10 @@ app.get('/Refresh', controller.validate, function(req, res) {
     tokenProvider.generateNewTokens(req, res)
 })
 
+//example route for a get request with access token
+app.get('/Resource', controller.validate, function(req, res, next) {
+    res.json(req.isValid);
+});
 
 //Resource Routes
 app.get("/getAudio", controller.validate, function(req, res) {
@@ -77,9 +84,54 @@ app.get("/getAudio", controller.validate, function(req, res) {
     }
 });
 
-//example route for a get request with access token
-app.get('/Resource', controller.validate, function(req, res, next) {
-    res.json(req.isValid);
+//AI response
+app.post("/SER", controller.validate, function(req, res) {
+    if(req.isValid.success) {
+
+        var spawn = require("child_process").spawn;
+      
+
+        var pyprocess = spawn('py', ["./hello.py", req.body.input]);
+
+
+        // Takes stdout data from script which executed
+        // with arguments and send this data to res object
+        pyprocess.stdout.on('data', function (data) {
+            console.log(data.toString().trim());
+            res.send(data.toString());
+        })
+
+        pyprocess.stderr.on('data', (data) => {
+            console.error(`stderr: ${data}`);
+        });
+
+        pyprocess.on('close', (code) => {
+            console.log(`child process exited with code ${code}`);
+        });
+
+        //send request to the AI lambda function
+        // let getReq = Axios.get(AIurl + '/SER', {                      //change to actual route for lambda function
+        //     headers: {
+        //         'Authorization': 'Bearer ' + req.headers['authorization']
+        //     },
+        //     params: {
+        //         'input': req.params.input
+        //     }
+        // }).then(function(response) {
+        //     if(response.data.success) {
+        //         res.send(response.data.message)
+        //     }
+        //     else {
+        //         res.status(401).send(response.data.message)
+        //     }
+        // })
+        // .catch((error) => {
+        //     console.log(error);
+        // });
+    }
+    else {
+        res.status(401).send(req.isValid)
+    }
 });
 
 

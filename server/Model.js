@@ -8,6 +8,7 @@ const connection = require('./dbconnection');
         lastName VARCHAR(60), 
         age INTEGER, 
         email VARCHAR(254), 
+        emotions JSON,
         PRIMARY KEY(memID))"
 
     user_account
@@ -30,7 +31,7 @@ const Model = {
               throw err;
             } 
 
-            let sql = "CREATE TABLE user ( memID INTEGER NOT NULL AUTO_INCREMENT, dateJoined DATE, firstName VARCHAR(60), lastName VARCHAR(60), age INTEGER, email VARCHAR(254), PRIMARY KEY(memID))"
+            let sql = "CREATE TABLE user ( memID INTEGER NOT NULL AUTO_INCREMENT, dateJoined DATE, firstName VARCHAR(60), lastName VARCHAR(60), age INTEGER, email VARCHAR(254), emotions JSON, PRIMARY KEY(memID))"
             connection.query(sql, function (err, results) {
               if (err) {
                 console.log(err.message);
@@ -137,8 +138,8 @@ const Model = {
         let date = new Date();
         let dateString = date.getFullYear() + '-' +date.getMonth() + '-' + date.getDate();
        
-        var sql = "INSERT INTO user VALUES (?, ?, ?, ?, ?, ?)"
-        var params = [0, dateString, 't', 't', 20, 't']
+        var sql = "INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?)"
+        var params = [0, dateString, 't', 't', 20, 't', '{}']
         connection.getConnection((err) => {
             if (err) {
                 console.log(err.message);

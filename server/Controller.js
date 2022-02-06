@@ -27,7 +27,7 @@ const Controller = {
         
         /** check if email is valid */
         if (!validator.validate(data.email)) {
-            res.json({
+            res.status(401).json({
                 "success": false,
                 "message": "Email is not valid",
             })
@@ -46,8 +46,8 @@ const Controller = {
             return;
         }
 
-        var sql = 'INSERT INTO user (dateJoined, firstName, lastName, email, age)  VALUES (?, ?, ?, ?, ?)'
-        var params = [data.dateJoined, data.firstName, data.lastName, data.email, data.age]
+        var sql = 'INSERT INTO user (dateJoined, firstName, lastName, email, age, emotions)  VALUES (?, ?, ?, ?, ?, ?)'
+        var params = [data.dateJoined, data.firstName, data.lastName, data.email, data.age, '{}']
         connection.query(sql, params, function (err, result) {
             if (err) {
                 res.status(400).json({"error": err.message})
@@ -97,7 +97,7 @@ const Controller = {
                 user = content;
                 if (user[0] === [] || user[0] === null || user[0] === undefined)  {
                     console.log("Authentication failed. User not found.")
-                    res.json ({
+                    res.status(401).json ({
                         success: false,
                         message: 'Authentication failed. User not found.'
                     });
@@ -129,7 +129,7 @@ const Controller = {
 
                         if (!success) {
                             console.log("Authentication failed. Wrong password.")
-                            res.json ({
+                            res.status(401).json ({
                                 success: false,
                                 message: 'Authentication failed. Wrong password.'
                             });
@@ -166,7 +166,7 @@ const Controller = {
                             //return all tokens
                             res.json({
                                 success: true,
-                                message: 'Heres a token my guy', 
+                                message: 'Heres a token', 
                                 token: token
                             });
                         }
