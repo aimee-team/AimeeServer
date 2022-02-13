@@ -4,7 +4,7 @@ const config = require('./config');
 
 const TokenProvider = {
     generateAccessToken: function(memID, username) {
-        const access_token = jwt.sign( {memberID: memID, name: username}, config.secret, { algorithm: 'HS256', expiresIn: "1 minute"}); //change to 15 minutes for release
+        const access_token = jwt.sign( {memberID: memID, name: username}, config.secret, { algorithm: 'HS256', expiresIn: "5 minutes"}); //change to 15 minutes for release
         const refresh_token = jwt.sign( {memberID: memID, name: username}, config.refreshTokenSecret);  //To Do: add expiree date for refresh token ~14 days
         return response = {
             "token": access_token,

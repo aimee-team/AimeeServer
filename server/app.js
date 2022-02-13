@@ -84,12 +84,18 @@ app.get("/getAudio", controller.validate, function(req, res) {
     }
 });
 
-//AI response
+/**
+ * AI response
+ * Requires the body values:
+ * ```
+ * input: String
+ * ```
+ */
 app.post("/SER", controller.validate, function(req, res) {
     if(req.isValid.success) {
 
+        var emotionString = ''
         var spawn = require("child_process").spawn;
-      
 
         var pyprocess = spawn('py', ["./hello.py", req.body.input]);
 
@@ -97,8 +103,9 @@ app.post("/SER", controller.validate, function(req, res) {
         // Takes stdout data from script which executed
         // with arguments and send this data to res object
         pyprocess.stdout.on('data', function (data) {
-            console.log(data.toString().trim());
-            res.send(data.toString());
+            emotionString = data.toString().trim().substring(20);           //get just the array
+            var epochTime = controller.updateEmotions(req, emotionString, res);
+        
         })
 
         pyprocess.stderr.on('data', (data) => {
@@ -133,6 +140,26 @@ app.post("/SER", controller.validate, function(req, res) {
         res.status(401).send(req.isValid)
     }
 });
+
+/**
+ * Requires the following body values:
+ * ```
+ * epochTime: int
+ * correctEmotion: int ∈ {0, 1, 2}
+ * emotions: String of array (i.e. "[0.12, 0.23, 0.65]")
+ * ```
+ */
+app.post("/SERfeedback", controller.validate, function(req, res) {
+    if(req.isValid.success) {
+        controller.recordCorrectEmotion(
+            req, 
+            JSON.parse(req.body.epochTime), 
+            JSON.parse(req.body.correctEmotion), 
+            JSON.parse(req.body.emotions), 
+            res
+        );
+    }
+})
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}`));
