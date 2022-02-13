@@ -3,9 +3,9 @@ const config = require('./config');
 
 
 const TokenProvider = {
-    generateAccessToken: function(memID, username) {
-        const access_token = jwt.sign( {memberID: memID, name: username}, config.secret, { algorithm: 'HS256', expiresIn: "5 minutes"}); //change to 15 minutes for release
-        const refresh_token = jwt.sign( {memberID: memID, name: username}, config.refreshTokenSecret);  //To Do: add expiree date for refresh token ~14 days
+    generateAccessToken: function(memID, access_level, username) {
+        const access_token = jwt.sign( {memberID: memID, access: access_level, name: username}, config.secret, { algorithm: 'HS256', expiresIn: "5 minutes"}); //change to 15 minutes for release
+        const refresh_token = jwt.sign( {memberID: memID, access: access_level, name: username}, config.refreshTokenSecret);  //To Do: add expiree date for refresh token ~14 days
         return response = {
             "token": access_token,
             "refresh_token": refresh_token,
@@ -14,7 +14,7 @@ const TokenProvider = {
 
     /**
      * Returns an ID token with the given payload
-     * @param {*} data The payload for the JWT, which should have fields for `username`, `firstName`, `lastName`, `email`, and `age`
+     * @param {Object} data The payload for the JWT, which should have fields for `username`, `firstName`, `lastName`, `email`, and `age`
      * @returns The JWT id token
      */
     generateIDToken: function(data) {
@@ -50,7 +50,7 @@ const TokenProvider = {
                     // console.log('yes')
                     let payload = jwt.verify(refresh, config.refreshTokenSecret);
                     //if refresh token is valid
-                    let response = this.generateAccessToken(payload.memberID, payload.name);
+                    let response = this.generateAccessToken(payload.memberID, payload.access, payload.name);
                     console.log('Successfully refreshed tokens')
                     res.json({
                         success: true,

@@ -13,6 +13,7 @@ const connection = require('./dbconnection');
 
     user_account
         ID INTEGER NOT NULL AUTO_INCREMENT, 
+        access_level INTEGER,
         user_name VARCHAR(60), 
         password VARCHAR(60), 
         password_salt VARCHAR(60), 
@@ -49,7 +50,7 @@ const Model = {
               throw err;
             } 
 
-            let sql = "CREATE TABLE user_account ( ID INTEGER NOT NULL AUTO_INCREMENT, user_name VARCHAR(60), password VARCHAR(60), password_salt VARCHAR(60), password_hash_algorithm VARCHAR(60), access_token VARCHAR(260), refresh_token VARCHAR(260), PRIMARY KEY(ID))"
+            let sql = "CREATE TABLE user_account ( ID INTEGER NOT NULL AUTO_INCREMENT, access_level INTEGER, user_name VARCHAR(60), password VARCHAR(60), password_salt VARCHAR(60), password_hash_algorithm VARCHAR(60), access_token VARCHAR(260), refresh_token VARCHAR(260), PRIMARY KEY(ID))"
             connection.query(sql, function (err, results) {
               if (err) {
                 console.log(err.message);
@@ -116,7 +117,7 @@ const Model = {
     },
 
     populateUserAccount: function() {
-        var sql = "INSERT INTO user_account (user_name, password) VALUES ('t', 't')"
+        var sql = "INSERT INTO user_account (access_level, user_name, password) VALUES (1, 't', 't')"
         connection.getConnection((err) => {
             if (err) {
                 console.log(err.message);

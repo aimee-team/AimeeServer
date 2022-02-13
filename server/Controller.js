@@ -54,7 +54,7 @@ const Controller = {
                 return;
             }
             else {
-                sql = 'INSERT INTO user_account (user_name, password, password_salt, password_hash_algorithm) VALUES (?, ?, ?, ?)'
+                sql = 'INSERT INTO user_account (access_level, user_name, password, password_salt, password_hash_algorithm) VALUES (1, ?, ?, ?, ?)'
                 var salt = bcrypt.genSaltSync(8); /** salt */
                 var hash = bcrypt.hashSync(data.password, salt); /** hash password */
                 params = [data.userName, hash, salt, 'bcrypt']
@@ -113,6 +113,7 @@ const Controller = {
                         return;
                     }
                     var memberID = user[0].ID;
+                    var access_level = user[0].access_level;
                     if (!bcrypt.compareSync(data.password, user[0].password)) { /** AUTHENTICATED */
 
                         let success = false
@@ -122,6 +123,7 @@ const Controller = {
                             if (bcrypt.compareSync(data.password, user[i].password)) {
                                 success = true
                                 memberID = user[i].ID
+                                access_level = user[i].access_level
                                 // console.log(memberID)
                                 break;
                             }
@@ -138,7 +140,7 @@ const Controller = {
                     }
 
                     // user and password correct (otherwise would've returned out of the function)
-                    var token = tokenProvider.generateAccessToken(memberID, data.userName);
+                    var token = tokenProvider.generateAccessToken(memberID, access_level, data.userName);
 
                     //get IDtoken
                     var sql = 'SELECT * from user where memID = ?'
@@ -337,7 +339,7 @@ module.exports = Controller;
 
 
 function fetchName(userName, callback) {
-    connection.query('SELECT user_name, password, ID FROM user_account WHERE user_name = ?', userName, function (err, result) {
+    connection.query('SELECT user_name, access_level, password, ID FROM user_account WHERE user_name = ?', userName, function (err, result) {
         if (err) {
             callback(err, null);
         } else {
