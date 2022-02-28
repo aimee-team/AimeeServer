@@ -33,6 +33,8 @@ app.get("/", (req, res) => res.send("This is a Node.js server running."));
 async function init() {
   model.dropUserAccountTable();
   await sleep(500);
+  model.dropEmotionsTable();
+    await sleep(500);
   model.dropUserTable();
   await sleep(500);
   model.createUserTable();

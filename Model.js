@@ -43,6 +43,25 @@ const Model = {
         });
     },
 
+    dropEmotionsTable: function() {
+        connection.getConnection((err) => {
+            if (err) {
+              console.log(err.message);
+              throw err;
+            } 
+
+            let sql = "DROP TABLE IF EXISTS emotions";
+            connection.query(sql, function (err, results) {
+              if (err) {
+                console.log(err.message);
+                throw err;
+              }
+              console.log("emotions table dropped");
+            });
+        });
+    },
+
+
     createUserAccountTable: function() {
         connection.getConnection((err) => {
             if (err) {
