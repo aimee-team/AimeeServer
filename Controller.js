@@ -46,8 +46,8 @@ const Controller = {
             return;
         }
 
-        var sql = 'INSERT INTO user (dateJoined, firstName, lastName, email, age, emotions)  VALUES (?, ?, ?, ?, ?, ?)'
-        var params = [data.dateJoined, data.firstName, data.lastName, data.email, data.age, '{}']
+        var sql = 'INSERT INTO user (dateJoined, firstName, lastName, email, age)  VALUES (?, ?, ?, ?, ?)'
+        var params = [data.dateJoined, data.firstName, data.lastName, data.email, data.age]
         connection.query(sql, params, function (err, result) {
             if (err) {
                 res.status(400).json({"error": err.message})
@@ -240,28 +240,25 @@ const Controller = {
     },
 
     /**
-     * This function takes the response that the SER model returns and updates the `user` database table with the new 
+     * This function takes the response that the SER model returns and updates the `emotions` database table with the new 
      * emotion entry.
-     * An entry in the JSON document models the following example:
-     * ```
-     * {
-     *     "a1644699221" : [0.11, 0.86, 0.03]
-     * }
-     * ```
-     * The key is in the format of `"a"`+`unix_epoch` where `unix_epoch` is the seconds after epoch when the data was added.
-     * The value is an array of the three percentages returned by the SER model representing the three emotions. The order of
-     * the emotions are <i>joy</i>, <i>anger</i>, and <i>sadness</i>.
+     * The date is stored as an integer of the UNIX timestamp, in seconds.
+     * The values of the `joy`, `anger`, and `sadness` columns are the percentages returned by the SER model. By default, the correct
+     * emotion is set to 0, until the user sends their feedback.
      * @param {Request} req The request object, having been passed through the `validate` middleware
-     * @param {String} emotionString The string representation of the array of 3 values the SER model returns
-     * @param {Response} res The response object to send the response back to the client
+     * @param {String} emotionString The string representation of the array of 3 values the SER model returns. The order of
+     * the emotions are <i>joy</i>, <i>anger</i>, and <i>sadness</i>.
+     * @param {Response} res The response object to send the response back to the client. If successful, a JSON object with keys for the time
+     * and the emotion percentages will be sent back.
      */
     updateEmotions: function(req, emotionString, res) {
         
         const secondsSinceEpoch = Math.round(Date.now() / 1000)
-        JSON.parse(emotionString)
+        var emotionArr = JSON.parse(emotionString)
 
-        var sql = 'UPDATE user SET emotions = JSON_SET(emotions, ?, ?) WHERE memID = ?' //update user set emotions = JSON_SET(emotions, '$.a', 10) where memID = 2;
-        var params = ['$.a' + secondsSinceEpoch.toString(), emotionString, req.isValid.payload.memberID]
+        //update user set emotions = JSON_SET(emotions, '$.a', 10) where memID = 2;
+        var sql = 'INSERT INTO emotions (memID, date, joy, anger, sadness, correct) VALUES (?, ?, ?, ?, ?, 0)'
+        var params = [req.isValid.payload.memberID, secondsSinceEpoch, emotionArr[0], emotionArr[1], emotionArr[2]]
 
         connection.query(sql, params, function (err, result) {
             if (err) {
@@ -273,7 +270,7 @@ const Controller = {
             }
             else {
                 res.status(200).json({
-                    key: secondsSinceEpoch,
+                    time: secondsSinceEpoch,
                     emotions: emotionString
                 });
                 return secondsSinceEpoch
@@ -282,30 +279,19 @@ const Controller = {
     },
 
     /**
-     * Updates the database with the user response for most accurate emotion, so as to help train the SER model. Database entries
-     * are updated to be in the format of:
-     * ```
-     * {
-     *     "a1644699221" : [0.11, 0.86, 0.03, 1]
-     * }
-     * ```
+     * Updates the database with the user response for most accurate emotion, so as to help train the SER model. Updates the `correct` 
+     * column of the `emotions` table.
      * The array is of length 4, where the last value is the indice of the most accurate emotion, an integer from 0 to 2.
      * @param {Request} req The request object, having been passed through the `validate` middleware
-     * @param {Number} epochTime The unix epoch time (in seconds) of the emotion being initially analyzed. This is part of
-     * the key for the JSON entry in the database.
-     * @param {Number} correctEmotion The indice of the most accurate emotion, as an integer from 0 to 2.
-     * @param {Array.<Number>} emotionArray The array of 3 values returned by the SER model representing the three emotions.
+     * @param {Number} epochTime The unix epoch time (in seconds) of the emotion being initially analyzed. This is the primary key for the
+     * database entry.
+     * @param {Number} correctEmotion The indice of the most accurate emotion, as an integer from 1 to 3.
      * @param {Response} res The response object to send the response back to the client
      */
-    recordCorrectEmotion: function(req, epochTime, correctEmotion, emotionArray, res) {
+    recordCorrectEmotion: function(req, epochTime, correctEmotion, res) {
 
-        //append correct emotion to array
-        emotionArray.push(correctEmotion)
-
-        var emotionString = JSON.stringify(emotionArray)
-
-        var sql = 'UPDATE user SET emotions = JSON_REPLACE(emotions, ?, ?) WHERE memID = ?'
-        var params = ['$.a' + epochTime.toString(), emotionString, req.isValid.payload.memberID]
+        var sql  = 'UPDATE emotions SET correct = ? WHERE date = ? AND memID = ?'
+        var params = [correctEmotion, epochTime, req.isValid.payload.memberID]
 
         connection.query(sql, params, function (err, result) {
             if (err) {

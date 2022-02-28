@@ -7,7 +7,8 @@ let connection = mysql.createPool({
     user     : 'AIMEEuser',     // Your database's username.
     password : 'AIMEEpw11',        // Your database's password.
     database : 'members',   // Your database's name.
-    port     : 3306
+    port     : 3306,
+    multipleStatements: true
 });
 
 module.exports = connection;

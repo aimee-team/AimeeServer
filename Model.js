@@ -8,8 +8,17 @@ const connection = require('./dbconnection');
         lastName VARCHAR(60), 
         age INTEGER, 
         email VARCHAR(254), 
-        emotions JSON,
         PRIMARY KEY(memID))"
+
+    emotions
+        entryID INTEGER NOT NULL AUTO_INCREMENT,
+        memID INTEGER,
+        date INTEGER,
+        joy INTEGER,
+        anger INTEGER,
+        sadness INTEGER,
+        correct INTEGER,
+        PRIMARY KEY(entryID)
 
     user_account
         ID INTEGER NOT NULL AUTO_INCREMENT, 
@@ -32,13 +41,31 @@ const Model = {
               throw err;
             } 
 
-            let sql = "CREATE TABLE user ( memID INTEGER NOT NULL AUTO_INCREMENT, dateJoined DATE, firstName VARCHAR(60), lastName VARCHAR(60), age INTEGER, email VARCHAR(254), emotions JSON, PRIMARY KEY(memID))"
+            let sql = "CREATE TABLE user ( memID INTEGER NOT NULL AUTO_INCREMENT, dateJoined DATE, firstName VARCHAR(60), lastName VARCHAR(60), age INTEGER, email VARCHAR(254), PRIMARY KEY(memID))"
             connection.query(sql, function (err, results) {
               if (err) {
                 console.log(err.message);
                 throw err;
               }
               console.log("user table created");
+            });
+        });
+    },
+
+    createEmotionsTable: function() {
+        connection.getConnection((err) => {
+            if (err) {
+              console.log(err.message);
+              throw err;
+            } 
+
+            let sql = "CREATE TABLE emotions ( memID INTEGER, date INTEGER, joy INTEGER, anger INTEGER, sadness INTEGER, correct INTEGER, PRIMARY KEY(date))"
+            connection.query(sql, function (err, results) {
+              if (err) {
+                console.log(err.message);
+                throw err;
+              }
+              console.log("emotions table created");
             });
         });
     },
@@ -79,6 +106,24 @@ const Model = {
         });
     },
 
+    dropEmotionsTable: function() {
+        connection.getConnection((err) => {
+            if (err) {
+              console.log(err.message);
+              throw err;
+            } 
+
+            let sql = "DROP TABLE IF EXISTS emotions";
+            connection.query(sql, function (err, results) {
+              if (err) {
+                console.log(err.message);
+                throw err;
+              }
+              console.log("emotions table dropped");
+            });
+        });
+    },
+
     dropUserAccountTable: function() {
         connection.getConnection((err) => {
             if (err) {
@@ -104,16 +149,14 @@ const Model = {
               throw err;
             } 
 
-            let sql = "ALTER TABLE user_account ADD FOREIGN KEY (ID) REFERENCES user(memID)"
+            let sql = "ALTER TABLE user_account ADD FOREIGN KEY (ID) REFERENCES user(memID); ALTER TABLE emotions ADD FOREIGN KEY (memID) REFERENCES user(memID)"
             connection.query(sql, function (err, results) {
               if (err) {
                 console.log(err.message);
                 throw err;
               }
-              console.log("foreign keys created");
             });
         });
-
     },
 
     populateUserAccount: function() {
@@ -139,8 +182,8 @@ const Model = {
         let date = new Date();
         let dateString = date.getFullYear() + '-' +date.getMonth() + '-' + date.getDate();
        
-        var sql = "INSERT INTO user VALUES (?, ?, ?, ?, ?, ?, ?)"
-        var params = [0, dateString, 't', 't', 20, 't', '{}']
+        var sql = "INSERT INTO user VALUES (?, ?, ?, ?, ?, ?)"
+        var params = [0, dateString, 't', 't', 20, 't']
         connection.getConnection((err) => {
             if (err) {
                 console.log(err.message);

@@ -33,9 +33,13 @@ app.get("/", (req, res) => res.send("This is a Node.js server running."));
 async function init() {
   model.dropUserAccountTable();
   await sleep(500);
+  model.dropEmotionsTable();
+  await sleep(500);
   model.dropUserTable();
   await sleep(500);
   model.createUserTable();
+  await sleep(500);
+  model.createEmotionsTable();
   await sleep(500);
   model.createUserAccountTable();
   await sleep(500);
@@ -58,11 +62,11 @@ init();
 
 
 app.post('/Login', function (req, res, next) {
-  controller.authenticateUser(req, res, next);
+    controller.authenticateUser(req, res, next);
 });
 
 app.post('/Register', function (req, res, next) {
-  controller.registerUser(req, res, next);
+    controller.registerUser(req, res, next);
 });
 
 app.get('/Refresh', controller.validate, function(req, res) {
@@ -145,8 +149,7 @@ app.post("/SER", controller.validate, function(req, res) {
  * Requires the following body values:
  * ```
  * epochTime: int
- * correctEmotion: int ∈ {0, 1, 2}
- * emotions: String of array (i.e. "[0.12, 0.23, 0.65]")
+ * correctEmotion: int ∈ {1, 2, 3}
  * ```
  */
 app.post("/SERfeedback", controller.validate, function(req, res) {
@@ -154,12 +157,28 @@ app.post("/SERfeedback", controller.validate, function(req, res) {
         controller.recordCorrectEmotion(
             req, 
             JSON.parse(req.body.epochTime), 
-            JSON.parse(req.body.correctEmotion), 
-            JSON.parse(req.body.emotions), 
+            JSON.parse(req.body.correctEmotion),  
             res
         );
     }
-})
+    else {
+        res.status(401).send(req.isValid)
+    }
+});
+
+/**
+ * Requires a `startTime` and `endTime` params.
+ * Time should be in unix time (seconds).
+ */
+app.get("/getEmotions", controller.validate, function(req, res) {
+    if(req.isValid.success) {
+        controller.getEmotions(req, req.params.startTime, req.params.endTime, res);
+    }
+    else {
+        res.status(401).send(req.isValid)
+    }
+});
+
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}`));
