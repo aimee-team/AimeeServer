@@ -6,8 +6,17 @@ const bcrypt = require('bcryptjs');
 const validator = require("email-validator");
 const passwordValidator = require('password-validator');
 
+/**
+ * An object consisting of functions that can be used to upon API calls to interact with user data and the database.
+ */
 const Controller = {
 
+    /**
+     * Registers a new user in the database based on information passed in the request body.
+     * @param {Request} req The request object with the registration information.
+     * @param {Response} res The response object to be sent back to the client.
+     * @param {Function} next The next middleware function in the request-response cycle.
+     */
     registerUser: function(req, res, next) {
         var errors=[]
     
@@ -76,6 +85,14 @@ const Controller = {
         });
     },
 
+    /**
+     * Checks to see if a user is registered in the database based on information passed in the request body. It then gives back the necessary
+     * information to the client.
+     * @param {Request} req The request object with the log-in information.
+     * @param {Response} res The response object to be sent back to the client. This will include the authentication token, refresh token, 
+     * and ID token.
+     * @param {Function} next The next middleware function in the request-response cycle.
+     */
     authenticateUser: function(req, res, next) {
         var errors=[]
     
@@ -204,8 +221,26 @@ const Controller = {
 
     /**
      * Middleware function to validate the access token to verify that the client has a valid token to access to the resource.
-     * If valid, the `isValid` property will be added to `req`, which can be used by the subsequent route handlers. The payload
-     * is added to `req.isValid.payload`.
+     * If valid, the `isValid` property will be added to `req`, which can be used by the subsequent route handlers. If successful, the 
+     * payload is added to `req.isValid.payload`.
+     * 
+     * The isValid property is an object that may look like the following:
+     * ```
+     * isValid: {
+     *     success: true,
+     *     message: 'Authorized access',
+     *     payload: {
+     *       memberID: '12345',
+     *       access: 1,
+     *       name: 'johndoe123',
+     *       iat: 1646506107,
+     *       exp: 1646506407
+     *     }
+     * }
+     * ```
+     * @param {Request} req The request object to be validated, and updated with the `isValid` property.
+     * @param {Response} res The response object to be sent back to the client
+     * @param {Function} next The next middleware function in the request-response cycle.
      */
     validate: function(req, res, next) {
 
@@ -258,7 +293,7 @@ const Controller = {
 
         //update user set emotions = JSON_SET(emotions, '$.a', 10) where memID = 2;
         var sql = 'INSERT INTO emotions (memID, date, joy, anger, sadness, correct) VALUES (?, ?, ?, ?, ?, 0)'
-        var params = [req.isValid.payload.memberID, secondsSinceEpoch, emotionArr[0], emotionArr[1], emotionArr[2]]
+        var params = [req.isValid.payload.memberID, secondsSinceEpoch, emotionArr[0] * 100, emotionArr[1] * 100, emotionArr[2] * 100]
 
         connection.query(sql, params, function (err, result) {
             if (err) {
@@ -281,12 +316,12 @@ const Controller = {
     /**
      * Updates the database with the user response for most accurate emotion, so as to help train the SER model. Updates the `correct` 
      * column of the `emotions` table.
-     * The array is of length 4, where the last value is the indice of the most accurate emotion, an integer from 0 to 2.
      * @param {Request} req The request object, having been passed through the `validate` middleware
      * @param {Number} epochTime The unix epoch time (in seconds) of the emotion being initially analyzed. This is the primary key for the
      * database entry.
-     * @param {Number} correctEmotion The indice of the most accurate emotion, as an integer from 1 to 3.
-     * @param {Response} res The response object to send the response back to the client
+     * @param {Number} correctEmotion Corresponds to the indice of the most accurate emotion, as an integer from 1 to 3 (inclusive).
+     * @param {Response} res The response object to send the response back to the client. If successful, a JSON object with the field 
+     * `key` for the time will be added.
      */
     recordCorrectEmotion: function(req, epochTime, correctEmotion, res) {
 
@@ -310,11 +345,58 @@ const Controller = {
                 }
                 else {
                     res.status(200).json({
-                        key: epochTime,
-                        emotions: emotionArray
+                        "key": epochTime
                     });
                 }
                 return epochTime
+            }
+        });
+    },
+
+    /**
+     * @typedef {Object} Emotion An object type that represents an emotion entry by a user.
+     * @property {Number} date The unix epoch time (in seconds) of when the emotion was recorded.
+     * @property {Number} joy The percentage of joy, as a Number between 0 and 100
+     * @property {Number} anger The percentage of anger, as a Number between 0 and 100
+     * @property {Number} sadness The percentage of sadness, as a Number between 0 and 100
+     * @property {Number} correct Corresponds to the indice of the most accurate emotion, as an integer from 1 to 3 (inclusive).
+     */
+
+    /**
+     * Retrieves the emotion scores recorded in the `emotions` database for a given user over a given time frame
+     * @param {Request} req The request object, having been passed through the `validate` middleware
+     * @param {Number} startTime The unix epoch time (in seconds) of the start of the time frame (inclusive).
+     * @param {Number} endTime The unix epoch time (in seconds) of the end of the time frame (inclusive).
+     * @param {Response} res The response object which will be sent back to the user. The JSON that is sent back, upon a successful query, will
+     * be an array of the {@link Emotion} object type (same as the return type).
+     * @returns {Emotion} An array of {@link Emotion} objects, corresponding to the emotions that were recorded in the database within the time frame.
+     */
+    getEmotions: function(req, startTime, endTime, res) {
+
+        var sql = 'SELECT * FROM emotions WHERE memID = ? AND date >= ? AND date <= ?'
+        var params = [req.isValid.payload.memberID, startTime, endTime]
+
+        connection.query(sql, params, function (err, result) {
+            if (err) {
+                console.log(err)
+                res.status(400).json({
+                    "error": err.message
+                })
+                return;
+            }
+            else {
+                if (result.length == 0) {
+                    console.log('No entries found')
+                    res.json([])
+                    return;
+                }
+                else {
+                    for (var i = 0; i < result.length; i++) {
+                        delete result[i].memID                  //so that the memID is not sent back to the client (security)
+                    }
+                    res.status(200).json(result)
+                }
+                return result
             }
         });
     }

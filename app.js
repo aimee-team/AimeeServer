@@ -172,7 +172,7 @@ app.post("/SERfeedback", controller.validate, function(req, res) {
  */
 app.get("/getEmotions", controller.validate, function(req, res) {
     if(req.isValid.success) {
-        controller.getEmotions(req, req.params.startTime, req.params.endTime, res);
+        controller.getEmotions(req, req.query.startTime, req.query.endTime, res);
     }
     else {
         res.status(401).send(req.isValid)
