@@ -5,7 +5,7 @@ const path = require("path");
 const port = 5000;
 const model = require('./Model');
 const controller = require('./Controller');
-const tokenProvider = require("./tokenProvider");
+const tokenProvider = require("./TokenProvider");
 const connection = require('./dbconnection');
 
 const AIurl = "http://localhost:5000/api/ai";       //change to route for Gateway API for aws lambda instance for the python ai script
@@ -30,27 +30,27 @@ app.use(bodyParser.json())
 app.get("/", (req, res) => res.send("This is a Node.js server running."));
 
 
-async function init() {
-  model.dropUserAccountTable();
-  await sleep(500);
-  model.dropEmotionsTable();
-  await sleep(500);
-  model.dropUserTable();
-  await sleep(500);
-  model.createUserTable();
-  await sleep(500);
-  model.createEmotionsTable();
-  await sleep(500);
-  model.createUserAccountTable();
-  await sleep(500);
-  model.addForeignKey();
-  await sleep(500);
-  model.populateUser();
-  await sleep(500);
-  model.populateUserAccount();
-  await sleep(500);
-  console.log("Finished setup");
-}
+// async function init() {
+//   model.dropUserAccountTable();
+//   await sleep(500);
+//   model.dropEmotionsTable();
+//   await sleep(500);
+//   model.dropUserTable();
+//   await sleep(500);
+//   model.createUserTable();
+//   await sleep(500);
+//   model.createEmotionsTable();
+//   await sleep(500);
+//   model.createUserAccountTable();
+//   await sleep(500);
+//   model.addForeignKey();
+//   await sleep(500);
+//   model.populateUser();
+//   await sleep(500);
+//   model.populateUserAccount();
+//   await sleep(500);
+//   console.log("Finished setup");
+// }
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -58,7 +58,7 @@ function sleep(ms) {
   });
 }   
 
-init();
+// init();      //resets the database
 
 
 app.post('/Login', function (req, res, next) {
@@ -101,7 +101,7 @@ app.post("/SER", controller.validate, function(req, res) {
         var emotionString = ''
         var spawn = require("child_process").spawn;
 
-        var pyprocess = spawn('py', ["./hello.py", req.body.input]);
+        var pyprocess = spawn('python3', ["./SER/NLP/main.py", req.body.input]);
 
 
         // Takes stdout data from script which executed

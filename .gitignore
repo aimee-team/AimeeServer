@@ -1,3 +1,7 @@
+#Don't commit test SER & python files to the server
+SER/
+
+
 # Logs
 logs
 *.log

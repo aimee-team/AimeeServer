@@ -14,7 +14,7 @@ const TokenProvider = {
      * @returns {{"token": String, "refresh_token": String}} An object containing the generated authentication and refresh tokens.
      */
     generateAccessToken: function(memID, access_level, username) {
-        const access_token = jwt.sign( {memberID: memID, access: access_level, name: username}, config.secret, { algorithm: 'HS256', expiresIn: "5 minutes"}); //change to 15 minutes for release
+        const access_token = jwt.sign( {memberID: memID, access: access_level, name: username}, config.secret, { algorithm: 'HS256', expiresIn: "15 minutes"}); //change to 15 minutes for release
         const refresh_token = jwt.sign( {memberID: memID, access: access_level, name: username}, config.refreshTokenSecret);  //To Do: add expiree date for refresh token ~14 days
         return response = {
             "token": access_token,

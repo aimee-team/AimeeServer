@@ -1,6 +1,6 @@
 {
-    "secret": "some-secret-shit-goes-here",
-    "refreshTokenSecret": "some-more-secret-refresh-token-shit",
-    "idTokenSecret": "secret-secrets-for-the-id-token",
+    "secret": "olIavAGlfjaEPSalPHdv5SuzOffZGK3m",
+    "refreshTokenSecret": "tWDAW8Lv3MKKRy68coOjVUtbH6y96FoHxeEm39TXJ0",
+    "idTokenSecret": "0hmK05tuPjJ83WBIjmRcKWfYeFBnEGzL",
     "salt": "Biscuits"
 }
