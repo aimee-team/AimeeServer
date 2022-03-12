@@ -2,6 +2,10 @@
 
 Repository to house code for the server for the MyAimee mobile application, that provides logic for its backend processes using Node.js.
 
+## Runtime
+[PM2](https://pm2.io/) is used to keep the Node app running as a background daemon on the server. Documentation for the different commands and tools to monitor, start, and 
+manage these processes can be found at [https://pm2.keymetrics.io/docs/usage/pm2-doc-single-page/](https://pm2.keymetrics.io/docs/usage/pm2-doc-single-page/).
+
 ## API Documentation
 The following is documentation for the different API routes that can be called and their necessary information. The routes can be appended to the server url, which is 
 [`http://ec2-54-156-106-7.compute-1.amazonaws.com:5000`](http://ec2-54-156-106-7.compute-1.amazonaws.com:5000). The *application/x-www-form-urlencoded* content type
