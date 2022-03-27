@@ -101,7 +101,9 @@ app.post("/SER", controller.validate, function(req, res) {
         var emotionString = ''
         var spawn = require("child_process").spawn;
 
-        var pyprocess = spawn('python3', ["./SER/NLP/main.py", req.body.input]);
+        // var pyprocess = spawn('python3', ["./SER/NLP/main.py", req.body.input]);
+        var command = 'cd SER/NLP && python3 main.py ' + req.body.input + ' && cd ../..';
+        var pyprocess = spawn(command);
 
 
         // Takes stdout data from script which executed
