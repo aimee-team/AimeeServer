@@ -109,7 +109,8 @@ app.post("/SER", controller.validate, function(req, res) {
         // Takes stdout data from script which executed
         // with arguments and send this data to res object
         pyprocess.stdout.on('data', function (data) {
-            emotionString = data.toString().trim();           //get just the array
+            initString = data.toString().trim();           //get just the array
+            let emotionString = initString.replace(/ /g, ", ");
             var epochTime = controller.updateEmotions(req, emotionString, res);
         
         })
