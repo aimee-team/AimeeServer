@@ -101,15 +101,15 @@ app.post("/SER", controller.validate, function(req, res) {
         var emotionString = ''
         var spawn = require("child_process").spawn;
 
-        // var pyprocess = spawn('python3', ["./SER/NLP/main.py", req.body.input]);
-        var command = 'cd SER/NLP && python3 main.py ' + req.body.input + ' && cd ../..';
-        var pyprocess = spawn(command);
+        var pyprocess = spawn('python3', ["main.py", req.body.input], {
+            cwd: "./SER/NLP"
+        });
 
 
         // Takes stdout data from script which executed
         // with arguments and send this data to res object
         pyprocess.stdout.on('data', function (data) {
-            // emotionString = data.toString().trim().substring(20);           //get just the array
+            emotionString = data.toString().trim();           //get just the array
             var epochTime = controller.updateEmotions(req, emotionString, res);
         
         })
