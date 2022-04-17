@@ -110,7 +110,17 @@ app.post("/SER", controller.validate, function(req, res) {
         // with arguments and send this data to res object
         pyprocess.stdout.on('data', function (data) {
             initString = data.toString().trim();           //get just the array
-            let emotionString = initString.replace(/ /g, ", ");
+            let emotionString = "";                         
+            for (var i = 0; i < initString.length; i++) {           //turn [0.4 0.8 0.9] into [0.4, 0.8, 0.9]
+                if (initString.charAt(i) != ' ') {
+                    emotionString += initString.charAt(i);
+                } else {
+                    emotionString += ', '
+                    while (initString.charAt(i + 1) === ' ') {
+                        i++;
+                    }
+                }
+            }
             var epochTime = controller.updateEmotions(req, emotionString, res);
         
         })
